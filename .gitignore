@@ -1,0 +1,25 @@
+# Build output
+build/
+out*
+
+# West workspace artifacts (本仓库作为 manifest 时, west 拉取的 zephyr 等)
+modules/
+zephyr/
+.mcuboot
+
+# CMake
+.cache/
+compile_commands.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Logs
+*.log

@@ -1,0 +1,108 @@
+# SPDX-License-Identifier: Apache-2.0
+# CANopenNode (v4) Zephyr module configuration
+
+config CANOPENNODE
+	bool "CANopenNode (v4) protocol stack"
+	depends on CAN
+	help
+	  Enable the CANopenNode v4 protocol stack (CiA 301 / 305 / 309).
+	  CANopenNode is included as a git submodule at CANopenNode/.
+	  This is an independent Zephyr module for v4 of the stack
+	  (Zephyr main removed its legacy v1.3 integration after 4.4).
+
+if CANOPENNODE
+
+config CANOPEN_NODE_ID
+	int "CANopen node ID"
+	default 10
+	range 1 127
+	help
+	  Default CANopen node ID for the device. May be overridden at
+	  runtime via LSS slave (CiA 305) if enabled.
+
+module = CANOPENNODE
+module-str = canopennode
+source "subsys/logging/Kconfig.template.log_config"
+
+config CANOPENNODE_SDO_BUFFER_SIZE
+	int "SDO server buffer size"
+	default 140
+	range 7 889
+	help
+	  Size of the SDO buffer in bytes. Must be at least equal to the
+	  size of the largest Object Dictionary variable. For DOMAIN
+	  data types the length is not limited. For block transfer set
+	  to 889.
+
+config CANOPENNODE_TRACE_BUFFER_SIZE
+	int "Trace buffer size"
+	default 100
+	help
+	  Size of the CANopen trace buffer in bytes.
+
+config CANOPENNODE_TX_WORKQUEUE_STACK_SIZE
+	int "TX workqueue stack size"
+	default 1024
+	help
+	  Stack for the internal CAN transmit workqueue.
+
+config CANOPENNODE_TX_WORKQUEUE_PRIORITY
+	int "TX workqueue priority"
+	default 0 if !COOP_ENABLED
+	default -1
+	help
+	  Priority of the internal CAN transmit workqueue.
+
+config CANOPENNODE_STORAGE
+	bool "Object dictionary storage via Zephyr settings"
+	depends on SETTINGS
+	default y
+	help
+	  Enable persistence of OD entries through Zephyr settings subsystem.
+
+config CANOPENNODE_LEDS
+	bool "CANopen LED indicators (CiA 303-3)"
+	default y
+	help
+	  Enable red/green status LEDs per CiA 303-3.
+
+config CANOPENNODE_SYNC_THREAD
+	bool "Internal SYNC thread for RPDO/TPDO processing"
+	default y
+	help
+	  Internal thread processing SYNC-driven PDOs. Disable if the
+	  application drives PDO processing itself.
+
+config CANOPENNODE_SYNC_THREAD_PERIOD_US
+	int "SYNC thread loop period (us)"
+	depends on CANOPENNODE_SYNC_THREAD
+	default 1000
+
+config CANOPENNODE_SYNC_THREAD_STACK_SIZE
+	int "SYNC thread stack size"
+	depends on CANOPENNODE_SYNC_THREAD
+	default 1024
+
+config CANOPENNODE_SYNC_THREAD_PRIORITY
+	int "SYNC thread priority"
+	depends on CANOPENNODE_SYNC_THREAD
+	default 0 if !COOP_ENABLED
+	default -5
+
+config CANOPENNODE_LSS
+	bool "LSS master/slave (CiA 305)"
+	default y
+	help
+	  Include Layer Setting Services master and slave code.
+
+config CANOPENNODE_SDO_CLIENT
+	bool "SDO client (master functionality)"
+	help
+	  Include SDO client code for accessing remote nodes' OD.
+
+config CANOPENNODE_GATEWAY_ASCII
+	bool "CiA 309-3 ASCII gateway"
+	help
+	  Include the ASCII command gateway (NMT master / LSS master / SDO client).
+
+endif # CANOPENNODE
