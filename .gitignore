@@ -2,9 +2,8 @@
 build/
 out*
 
-# West workspace artifacts (本仓库作为 manifest 时, west 拉取的 zephyr 等)
+# West workspace artifacts (若作为 manifest 仓库会拉取这些, 本仓库是 module 不需要)
 modules/
-zephyr/
 .mcuboot
 
 # CMake
