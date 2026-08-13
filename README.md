@@ -13,7 +13,7 @@ CANopenNode **v4** 协议栈的 **Zephyr RTOS** 独立模块仓库 (替代 Zephy
 - 自身是 **Zephyr module** (`zephyr/module.yml` 声明, 提供 `CONFIG_CANOPENNODE`)
 - 自身是 **Zephyr application** (含 `samples/canopen/`)
 - CANopenNode v4 作为 **git submodule** 内嵌 (`CANopenNode/`)
-- 通过 `west.yml` 仅引入 Zephyr 本体 (其他 module 由用户自己加)
+- 通过宿主 workspace 的 manifest (如 `iot-zephyr-app` 仓库的 `apps/west.yml`) 引入, 本仓库不自带 west.yml
 
 ## 当前状态: 骨架阶段
 
@@ -32,21 +32,34 @@ CANopenNode **v4** 协议栈的 **Zephyr RTOS** 独立模块仓库 (替代 Zephy
 
 ## 使用
 
-### 准备 workspace
+### 在宿主 workspace 中引入本 module
+
+本仓库作为 west project 加入宿主 workspace 的 manifest. 例如 `iot-zephyr-app` 仓库 (`apps/west.yml`) 已添加:
+
+```yaml
+projects:
+  - name: canopen-zephyr
+    remote: kabirz
+    revision: main
+    path: canopen-zephyr
+    submodules:
+      - path: CANopenNode
+```
+
+然后:
 
 ```bash
-west init -l canopen-zephyr        # 用本仓库 manifest 初始化 workspace
-west update                        # 拉取 zephyr + CANopenNode submodule
+west update                        # 拉取 canopen-zephyr + CANopenNode submodule
 ```
 
 ### 编译 sample
 
 ```bash
 # 通用板 (需该板有 CAN 外设 + DT chosen(zephyr_canbus))
-west build -b <your_board> samples/canopen
+west build -b <your_board> canopen-zephyr/samples/canopen
 
 # native_sim (Linux 仿真, 需配置 vcan + DT 关联)
-west build -b native_sim samples/canopen
+west build -b native_sim canopen-zephyr/samples/canopen
 ```
 
 ### 配置
@@ -80,7 +93,6 @@ CAN 设备由 devicetree chosen 节点指定:
 
 ```
 canopen-zephyr/
-├── west.yml                       manifest: import zephyr
 ├── zephyr/
 │   └── module.yml                 声明本仓库为 Zephyr module
 ├── Kconfig                        CONFIG_CANOPENNODE + 子选项
