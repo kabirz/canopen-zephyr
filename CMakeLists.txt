@@ -66,10 +66,18 @@ if(CONFIG_CANOPENNODE)
 	zephyr_library_sources_ifdef(CONFIG_CANOPENNODE_GATEWAY_ASCII
 		CANopenNode/309/CO_gateway_ascii.c)
 
-	# 持久化存储 (后续会话补 src/canopen_storage.c)
+	# 持久化存储 (Zephyr settings 后端, 不需要 CO_storageEeprom.c 的 EEPROM 实现)
 	zephyr_library_sources_ifdef(CONFIG_CANOPENNODE_STORAGE
 		CANopenNode/storage/CO_storage.c
-		CANopenNode/storage/CO_storageEeprom.c)
+		src/canopen_storage.c)
+
+	# LED 指示 (CiA 303-3, Zephyr GPIO)
+	zephyr_library_sources_ifdef(CONFIG_CANOPENNODE_LEDS
+		src/canopen_leds.c)
+
+	# SYNC 线程
+	zephyr_library_sources_ifdef(CONFIG_CANOPENNODE_SYNC_THREAD
+		src/canopen_sync_thread.c)
 
 	# 应用层便利封装 (canopennode.h)
 	zephyr_library_sources(

@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+sample:
+  name: CANopenNode v4 Zephyr sample
+  description: Minimal CANopen node using the CANopenNode v4 stack
+  platform_allow: native_sim
+  integration_platforms:
+    - native_sim
+  harness: console
+  harness_config:
+    type: one_line
+    regex:
+      - "CANopen \\(v4\\) sample 启动"
+  tags: can canopen

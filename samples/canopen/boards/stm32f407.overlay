@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) 2026 Kabirz.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * STM32F407 CANopen overlay 示例: 把 zephyr_canbus 指向 CAN1.
+ *
+ * 用法 (io_edge_f407vet6 或任意 stm32f4 板):
+ *   west build -b io_edge_f407vet6 -d build/stm32 samples/canopen \
+ *       -DDTC_OVERLAY_FILE=boards/stm32f407.overlay
+ *
+ * 引脚 (STM32F407VET6): CAN1_TX=PA12, CAN1_RX=PA11
+ */
+
+/ {
+	chosen {
+		zephyr_canbus = &can1;
+	};
+};
+
+&can1 {
+	status = "okay";
+	bitrate = <250000>;
+};
