@@ -15,20 +15,23 @@ CANopenNode **v4** 协议栈的 **Zephyr RTOS** 独立模块仓库 (替代 Zephy
 - CANopenNode v4 作为 **git submodule** 内嵌 (`CANopenNode/`)
 - 通过宿主 workspace 的 manifest (如 `iot-zephyr-app` 仓库的 `apps/west.yml`) 引入, 本仓库不自带 west.yml
 
-## 当前状态: 骨架阶段
+## 当前状态: 完整实现
 
 | 部分 | 状态 |
 |---|---|
 | 仓库结构 (manifest/module/CMake/Kconfig) | ✅ 完成 |
 | CANopenNode v4 submodule | ✅ 已添加 (master) |
 | `CMakeLists.txt` 编译 v4 源文件 (301/305/extra/...) | ✅ 完成 |
-| `include/CO_driver_target.h` (Zephyr 平台头) | 🟡 骨架 (用 v4 example, 单线程无锁) |
-| `src/CO_driver.c` (Zephyr CAN 适配) | 🟡 stub (函数全实现, 不连真实 CAN) |
-| `include/canopennode.h` 应用层 API 包装 | ✅ 完成 |
-| `samples/canopen/` 最小 sample | ✅ 完成 |
-| **CAN 真实收发** | ❌ TODO (后续会话) |
+| `include/CO_driver_target.h` (Zephyr 平台头 + k_mutex 锁) | ✅ 完成 |
+| `src/CO_driver.c` (Zephyr CAN 收发, RX filter + TX workqueue) | ✅ 完成 |
+| `src/canopennode_helpers.c` (v4 初始化序列包装) | ✅ 完成 |
+| `src/canopen_storage.c` (Zephyr settings 持久化 OD) | ✅ 完成 |
+| `src/canopen_leds.c` (CiA 303-3 LED, GPIO) | ✅ 完成 |
+| `src/canopen_sync_thread.c` (1ms SYNC 线程) | ✅ 完成 |
+| `samples/canopen/` 完整 sample + 板级 overlay | ✅ 完成 |
+| 编译验证 (native_sim) | ✅ 通过 |
 
-骨架阶段目标: **module 能编译通过, sample 能 build 出二进制**. CO_driver 是 stub, 不连真实 CAN 硬件.
+CAN 收发已完整实现: RX 走 `can_add_rx_filter` 回调, TX 走 `can_send` + 专用 workqueue 重试, 错误统计映射 Zephyr `can_get_state`.
 
 ## 使用
 
@@ -58,9 +61,16 @@ west update                        # 拉取 canopen-zephyr + CANopenNode submodu
 # 通用板 (需该板有 CAN 外设 + DT chosen(zephyr_canbus))
 west build -b <your_board> canopen-zephyr/samples/canopen
 
-# native_sim (Linux 仿真, 需配置 vcan + DT 关联)
-west build -b native_sim canopen-zephyr/samples/canopen
+# native_sim (Linux 仿真, 需 vcan + socketcan 配置)
+west build -b native_sim canopen-zephyr/samples/canopen \
+    -DDTC_OVERLAY_FILE=boards/native_sim.overlay
+
+# STM32F407 示例 (io_edge_f407vet6 等, 需板定义支持 CAN1)
+west build -b io_edge_f407vet6 canopen-zephyr/samples/canopen \
+    -DDTC_OVERLAY_FILE=boards/stm32f407.overlay
 ```
+
+> `-DDTC_OVERLAY_FILE` 的相对路径基于 sample 目录 (canopen-zephyr/samples/canopen/boards/)。
 
 ### 配置
 
@@ -125,15 +135,12 @@ canopen-zephyr/
 | 应用层入口 | `CO_init(node_id, bitrate)` | `CO_new()` + `CO_CANopenInit()` 多步 |
 | 协议支持 | 301/303/305 | 301/303/**304 (Safety)**/305/309 |
 
-## TODO (后续会话)
+## TODO (可选增强)
 
-1. `src/CO_driver.c`: 用 Zephyr `can_send()` / `can_add_rx_filter()` 实现真实 CAN 收发
-2. `include/CO_driver_target.h`: 用 `k_spinlock` / `k_mutex` 替换 stub 锁
-3. 加 `src/canopen_storage.c`: Zephyr settings 后端持久化 OD
-4. 加 `src/canopen_leds.c`: GPIO LED 跟随 CANopen 状态 (CiA 303-3)
-5. 加 `src/canopen_sync_thread.c`: 内部 SYNC 线程 (独立于 main 循环)
-6. 加板级 overlay 示例 (STM32 / native_sim vcan)
-7. 加 `sample.yaml` 用于 twister / CI
+1. 板级 overlay 实测 (STM32 真板收发验证)
+2. `CONFIG_CANOPENNODE_GATEWAY_ASCII` 启用时接入 UART 命令接口
+3. 多 OD (CO_MULTIPLE_OD) 支持
+4. `sample.yaml` 的 twister 集成 (CI 自动跑 native_sim)
 
 ## 许可证
 
