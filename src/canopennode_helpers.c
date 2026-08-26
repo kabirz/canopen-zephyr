@@ -127,6 +127,22 @@ CO_NMT_reset_cmd_t canopennode_process(uint32_t time_difference_us)
 		return CO_RESET_APP;
 	}
 
+	/* RT 部分: SYNC/RPDO/TPDO. v4 的 CO_process() 不含 PDO 处理, 三个
+	 * CO_process_*PDO/SYNC 必须由驱动方调用 (顺序参考 v4 example 的
+	 * main_blank.c 主循环), 否则事件型/定时型 PDO 与 RPDO 接收全部不工作.
+	 * 注意: RPDO/TPDO 共用一个配置宏 CO_CONFIG_PDO (按使能位区分) */
+	bool_t syncWas = false;
+
+#if ((CO_CONFIG_SYNC)&CO_CONFIG_SYNC_ENABLE) != 0
+	syncWas = CO_process_SYNC(CO, time_difference_us, &timer_next_us);
+#endif
+#if ((CO_CONFIG_PDO)&CO_CONFIG_RPDO_ENABLE) != 0
+	CO_process_RPDO(CO, syncWas, time_difference_us, &timer_next_us);
+#endif
+#if ((CO_CONFIG_PDO)&CO_CONFIG_TPDO_ENABLE) != 0
+	CO_process_TPDO(CO, syncWas, time_difference_us, &timer_next_us);
+#endif
+
 	/* v4 统一处理入口: CO_process 内部驱动 SDO/em/NMT/HB/LSS 等对象.
 	 * gateway 关闭 (无 CiA 309 需求). */
 	return CO_process(CO, false, time_difference_us, &timer_next_us);
