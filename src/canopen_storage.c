@@ -17,6 +17,7 @@
 #if defined(CONFIG_CANOPENNODE_STORAGE)
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <zephyr/settings/settings.h>
 #include <zephyr/logging/log.h>
@@ -27,6 +28,39 @@
 LOG_MODULE_REGISTER(canopennode_storage, CONFIG_CANOPENNODE_LOG_LEVEL);
 
 #define STORAGE_KEY_PREFIX "canopen/od"
+
+/* 当前生效的存储条目 (h_set 回调按 subIndexOD 找回目标缓冲) */
+static CO_storage_entry_t *active_entries;
+static uint8_t active_entries_count;
+
+/* settings 加载分发: key 形如 "od/<subIndexOD>" (完整键 canopen/od/<sub>).
+ * 没有本 handler 时 settings_load_subtree 不会把任何数据拷回 OD. */
+static int canopen_settings_set(const char *key, size_t len,
+				settings_read_cb read_cb, void *cb_arg)
+{
+	if (strncmp(key, "od/", 3) != 0) {
+		return -ENOENT;
+	}
+
+	uint8_t sub = (uint8_t)strtoul(&key[3], NULL, 10);
+
+	for (uint8_t i = 0; i < active_entries_count; i++) {
+		CO_storage_entry_t *entry = &active_entries[i];
+
+		if (entry->subIndexOD == sub) {
+			if (len != entry->len) {
+				return -EINVAL;
+			}
+			ssize_t rb = read_cb(cb_arg, entry->addr, entry->len);
+
+			return (rb == (ssize_t)entry->len) ? 0 : -EIO;
+		}
+	}
+	return -ENOENT;
+}
+
+SETTINGS_STATIC_HANDLER_DEFINE(canopen_od, "canopen", NULL,
+			       canopen_settings_set, NULL, NULL);
 
 /* OD 0x1010 store magic ('s','a','v','e') - 由 CO_storage 内部处理,
  * 这里只提供 Zephyr settings 的读/写后端. */
@@ -137,6 +171,10 @@ int canopen_storage_init(CO_storage_t *storage, CO_CANmodule_t *CANmodule,
 	/* v4 的 CO_storage_t.enabled 默认 false (0x1010/0x1011 写一律
 	 * READONLY); example/main_blank.c 由应用手动置位, 本封装代为开启 */
 	storage->enabled = true;
+
+	/* 供 canopen_settings_set 加载分发使用 */
+	active_entries = entries;
+	active_entries_count = entriesCount;
 
 	/* 启动时加载持久化数据覆盖 OD 默认值 */
 	ret = canopen_storage_load();
