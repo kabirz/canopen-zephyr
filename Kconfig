@@ -27,12 +27,22 @@ source "subsys/logging/Kconfig.template.log_config"
 config CANOPENNODE_SDO_BUFFER_SIZE
 	int "SDO server buffer size"
 	default 140
-	range 7 889
+	range 7 900
 	help
 	  Size of the SDO buffer in bytes. Must be at least equal to the
 	  size of the largest Object Dictionary variable. For DOMAIN
 	  data types the length is not limited. For block transfer set
-	  to 889.
+	  to 900 (CANopenNode v4 requires at least 900 bytes with SDO
+	  block transfer enabled).
+
+config CANOPENNODE_SDO_BLOCK
+	bool "SDO server block transfer"
+	default n
+	help
+	  Compile the SDO server with block transfer support (CiA 301
+	  block download/upload). Requires an SDO buffer of 900 bytes
+	  for full-size sub-blocks. Used by firmware download over SDO
+	  (e.g. CiA 302 objects 0x1F50/0x1F51).
 
 config CANOPENNODE_TRACE_BUFFER_SIZE
 	int "Trace buffer size"

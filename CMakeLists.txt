@@ -83,4 +83,24 @@ if(CONFIG_CANOPENNODE)
 	zephyr_library_sources(
 		src/canopennode_helpers.c
 	)
+
+	# Kconfig -> CANopenNode 编译配置宏映射 (CO_config.h / CO_SDOserver.h).
+	# 不映射时栈用自身默认: SDO buffer 32 字节, SDO 块传输不编译, LSS 宏
+	# 恒为 slave-enabled (源码未编译时链接失败).
+	zephyr_library_compile_definitions(
+		CO_CONFIG_SDO_SRV_BUFFER_SIZE=${CONFIG_CANOPENNODE_SDO_BUFFER_SIZE}
+	)
+	if(CONFIG_CANOPENNODE_SDO_BLOCK)
+		zephyr_library_compile_definitions(
+			CO_CONFIG_SDO_SRV=\(CO_CONFIG_SDO_SRV_SEGMENTED\|CO_CONFIG_SDO_SRV_BLOCK\|CO_CONFIG_GLOBAL_FLAG_CALLBACK_PRE\|CO_CONFIG_GLOBAL_FLAG_TIMERNEXT\|CO_CONFIG_GLOBAL_FLAG_OD_DYNAMIC\)
+		)
+		# 块传输 CRC 校验需要 CRC16 (CO_SDOserver.c 配置检查要求 CO_CONFIG_CRC16 含 ENABLE)
+		zephyr_library_compile_definitions(
+			CO_CONFIG_CRC16=\(CO_CONFIG_CRC16_ENABLE\)
+		)
+	endif()
+	if(NOT CONFIG_CANOPENNODE_LSS)
+		# LSS 源码未编译时必须同时清零 CO_CONFIG_LSS, 否则 CO_new 引用未链接对象
+		zephyr_library_compile_definitions(CO_CONFIG_LSS=0)
+	endif()
 endif()
