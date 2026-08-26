@@ -134,6 +134,10 @@ int canopen_storage_init(CO_storage_t *storage, CO_CANmodule_t *CANmodule,
 		return -EIO;
 	}
 
+	/* v4 的 CO_storage_t.enabled 默认 false (0x1010/0x1011 写一律
+	 * READONLY); example/main_blank.c 由应用手动置位, 本封装代为开启 */
+	storage->enabled = true;
+
 	/* 启动时加载持久化数据覆盖 OD 默认值 */
 	ret = canopen_storage_load();
 	if (ret != 0 && ret != -ENOENT) {
