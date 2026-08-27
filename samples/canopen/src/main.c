@@ -47,7 +47,7 @@ int main(void)
 	int rc;
 	CO_NMT_reset_cmd_t reset;
 
-	LOG_INF("CANopen (v4) sample 启动, node_id=%d", CANOPEN_NODE_ID);
+	LOG_INF("CANopen (v4) sample started, node_id=%d", CANOPEN_NODE_ID);
 
 #if defined(CONFIG_CANOPENNODE_STORAGE)
 	CO_storage_t storage;
@@ -66,7 +66,7 @@ int main(void)
 	while (1) {
 		rc = canopennode_init(CANOPEN_NODE_ID, CANOPEN_BITRATE_KBPS);
 		if (rc != 0) {
-			LOG_ERR("canopennode_init failed: %d, 1s 后重试", rc);
+			LOG_ERR("canopennode_init failed: %d, retry in 1s", rc);
 			k_sleep(K_SECONDS(1));
 			continue;
 		}
@@ -83,7 +83,7 @@ int main(void)
 
 #if defined(CONFIG_CANOPENNODE_LEDS)
 		if (canopen_leds_init(&leds) != 0) {
-			LOG_WRN("LED init failed (忽略)");
+			LOG_WRN("LED init failed (ignored)");
 		}
 #endif
 

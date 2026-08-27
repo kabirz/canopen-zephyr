@@ -52,7 +52,7 @@ int canopennode_init(uint8_t node_id, uint16_t bitrate_kbps)
 	/* 分配 CO 对象 (无 CO_MULTIPLE_OD, 用 OD.h 静态计数) */
 	CO = CO_new(NULL, &heap_used);
 	if (CO == NULL) {
-		LOG_ERR("CO_new 失败 (out of memory)");
+		LOG_ERR("CO_new failed (out of memory)");
 		return -ENOMEM;
 	}
 	LOG_INF("CO_new: %u bytes", heap_used);
@@ -65,7 +65,7 @@ int canopennode_init(uint8_t node_id, uint16_t bitrate_kbps)
 	CO->CANmodule->CANnormal = false;
 	err = CO_CANinit(CO, CANptr, pending_bitrate);
 	if (err != CO_ERROR_NO) {
-		LOG_ERR("CO_CANinit 失败: %d", err);
+		LOG_ERR("CO_CANinit failed: %d", err);
 		CO_delete(CO);
 		return -EIO;
 	}
@@ -77,7 +77,7 @@ int canopennode_init(uint8_t node_id, uint16_t bitrate_kbps)
 			     SDO_CLI_TIMEOUT_TIME_MS, SDO_CLI_BLOCK_TRANSFER,
 			     pending_node_id, &err_info);
 	if (err != CO_ERROR_NO && err != CO_ERROR_NODE_ID_UNCONFIGURED_LSS) {
-		LOG_ERR("CO_CANopenInit 失败: %d (err_info=%u)", err, err_info);
+		LOG_ERR("CO_CANopenInit failed: %d (err_info=%u)", err, err_info);
 		CO_delete(CO);
 		return -EIO;
 	}
@@ -96,7 +96,7 @@ int canopennode_init(uint8_t node_id, uint16_t bitrate_kbps)
 
 		err = CO_LSSinit(CO, &lss_address, &pending_node_id, &pending_bitrate);
 		if (err != CO_ERROR_NO) {
-			LOG_ERR("CO_LSSinit 失败: %d", err);
+			LOG_ERR("CO_LSSinit failed: %d", err);
 			CO_delete(CO);
 			return -EIO;
 		}
@@ -106,7 +106,7 @@ int canopennode_init(uint8_t node_id, uint16_t bitrate_kbps)
 	/* [4/4] PDO 映射初始化 */
 	err = CO_CANopenInitPDO(CO, CO->em, OD, pending_node_id, &err_info);
 	if (err != CO_ERROR_NO) {
-		LOG_ERR("CO_CANopenInitPDO 失败: %d (err_info=%u)", err, err_info);
+		LOG_ERR("CO_CANopenInitPDO failed: %d (err_info=%u)", err, err_info);
 		CO_delete(CO);
 		return -EIO;
 	}
@@ -114,7 +114,7 @@ int canopennode_init(uint8_t node_id, uint16_t bitrate_kbps)
 	/* 进入正常通信 */
 	CO_CANsetNormalMode(CO->CANmodule);
 
-	LOG_INF("CANopen 初始化完成 (node_id=%u, bitrate=%u kbps)",
+	LOG_INF("CANopen initialization done (node_id=%u, bitrate=%u kbps)",
 		node_id, bitrate_kbps);
 	return 0;
 }

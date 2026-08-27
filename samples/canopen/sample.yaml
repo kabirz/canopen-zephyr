@@ -10,5 +10,5 @@ sample:
   harness_config:
     type: one_line
     regex:
-      - "CANopen \\(v4\\) sample 启动"
+      - "CANopen \\(v4\\) sample started"
   tags: can canopen
